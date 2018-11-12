@@ -8,9 +8,11 @@ const serviceAccount = require("./serviceAccountKey.json");
 
 const REQUEST_INTENT = 'Request-Intent';
 const PERSON_INTENT = 'Person-Intent';
+const FF_INTENT = "Followup-Fallback-Intent";
+const FW_INTENT = "Followup-Welcome-Intent";
 const app = dialogflow();
 const DEFAULT_RESPONSE = "Jag förstod inte vad du sa, vem söker du?";
-
+const ERROR_MSG = "Något gick fel och det gick inte att slutföra sökningen.";
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -27,7 +29,41 @@ app.intent(REQUEST_INTENT, (conv) => {
 
     return check_parameters(conv).
             then((response) => {
-                console.log(response);
+                conv.ask(response);
+            })
+            .catch((error) => {
+                conv.ask(error);
+            });
+});
+
+app.intent(PERSON_INTENT, (conv) => {
+
+    return search_request(conv).
+            then((response) => {
+                conv.ask(response);
+            })
+            .catch((error) => {
+                conv.ask(error);
+            });
+});
+
+
+app.intent(FF_INTENT, (conv) => {
+
+    return search_request(conv).
+            then((response) => {
+                conv.ask(response);
+            })
+            .catch((error) => {
+                conv.ask(error);
+            });
+});
+
+
+app.intent(FW_INTENT, (conv) => {
+
+    return search_request(conv).
+            then((response) => {
                 conv.ask(response);
             })
             .catch((error) => {
@@ -37,6 +73,37 @@ app.intent(REQUEST_INTENT, (conv) => {
 
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);
 
+function search_request(conv) {
+    var params = conv.parameters;
+
+    var fname = params['first-name'].hasOwnProperty('given-name') ? (params['first-name'])['given-name'] : params['first-name'];
+    var lname = params['last-name'].hasOwnProperty('last-name') ? (params['last-name'])['last-name'] : params['last-name'];
+    var reqType = params['request-entity'];
+
+    var db = admin.database();
+    var key = 'calendars/';
+    return new Promise(function (resolve, reject) {
+        db.ref(key).orderByChild('name')
+                .equalTo(fname.toLowerCase() + " " + lname.toLowerCase())
+                .once('value', (snapshot) => {
+                    var value = snapshot.val();
+
+                    if (value === null || value === 'null') {
+                        resolve("Jag kan tyvärr inte hitta någon information på personen.");
+                        return;
+                    }
+                    var calendarID = value[0].calendarID;
+
+                    findEvent(calendarID, new Date(), fname, reqType)
+                            .then((resp) => {
+                                resolve(resp);
+                            })
+                            .catch((error) => {
+                                reject(error);
+                            });
+                });
+    });
+}
 function check_parameters(conv) {
     var params = conv.parameters;
     var fname = params['first-name'].hasOwnProperty('given-name') ? (params['first-name'])['given-name'] : params['first-name'];
@@ -48,56 +115,75 @@ function check_parameters(conv) {
 
     var db = admin.database();
     var key = 'calendars/';
+
     return new Promise(function (resolve, reject) {
-        db.ref(key)
-                .orderByChild('name')
+        db.ref(key).orderByChild('name')
                 .equalTo(fname.toLowerCase() + " " + lname.toLowerCase())
                 .once('value', (snapshot) => {
                     var value = snapshot.val();
                     if (value === null || value === 'null') {
-                        resolve("Jag kan inte hitta någon information på personen.");
+                        resolve("Jag kan tyvärr inte hitta någon information på personen.");
                         return;
                     }
-
                     var calendarID = value[0].calendarID;
 
                     if (empty(datetime) && empty(date) && empty(datePeriod)) {
-                        findEvent(calendarID, new Date(), fname, reqType, (resp) => {
-                            resolve(resp);
-                        });
+                        findEvent(calendarID, new Date(), fname, reqType)
+                                .then((resp) => {
+                                    resolve(resp);
+                                })
+                                .catch((error) => {
+                                    reject(error);
+                                });
 
                     } else if (!empty(datetime)) {
                         if (datetime.hasOwnProperty('startDateTime')) {
                             var startdate = datetime.startDateTime;
                             var enddate = datetime.endDateTime;
-                            findEvents(calendarID, new Date(startdate), new Date(enddate), fname, reqType,
-                                    (resp) => {
-                                resolve(resp);
-                            });
+                            findEvents(calendarID, startdate, enddate, fname, reqType)
+                                    .then((resp) => {
+                                        resolve(resp);
+                                    })
+                                    .catch((error) => {
+                                        reject(error);
+                                    });
                         } else {
-                            findEvent(calendarID, new Date(datetime), fname, reqType, (resp) => {
-                                resolve(resp);
-                            });
+                            findEvent(calendarID, datetime, fname, reqType)
+                                    .then((resp) => {
+                                        resolve(resp);
+                                    })
+                                    .catch((error) => {
+                                        reject(error);
+                                    });
                         }
                     } else if (!empty(date)) {
                         datetime = new Date(date);
                         var startdate = datetime.setHours(0, 0, 0, 0);
                         var enddate = datetime.setHours(23, 59, 59, 999);
-                        findEvents(calendarID, new Date(startdate), new Date(enddate), fname, reqType,
-                                (resp) => {
-                            resolve(resp);
-                        });
+                        findEvents(calendarID, startdate, enddate, fname, reqType)
+                                .then((resp) => {
+                                    resolve(resp);
+                                })
+                                .catch((error) => {
+                                    reject(error);
+                                });
                     } else if (!empty(datePeriod)) {
                         var startdate = (new Date(datePeriod.startDate)).setHours(0, 0, 0, 0);
                         var enddate = (new Date(datePeriod.endDate)).setHours(23, 59, 59, 999);
-                        findEvents(calendarID, new Date(startdate), new Date(enddate), fname, reqType,
-                                (resp) => {
-                            resolve(resp);
-                        });
+                        findEvents(calendarID, startdate, enddate, fname, reqType)
+                                .then((resp) => {
+                                    resolve(resp);
+                                })
+                                .catch((error) => {
+                                    reject(error);
+                                });
                     } else {
                         resolve(DEFAULT_RESPONSE);
                     }
 
+                }, (error) => {
+                    console.log("Database error: ", error);
+                    reject(ERROR_MSG);
                 });
     });
 
@@ -107,86 +193,120 @@ function empty(str) {
     return str === '';
 }
 
-function findEvent(calendarId, datetime, fname, request_type, callback) {
-    var dtMax = new Date(datetime);
-    dtMax = new Date(dtMax.setSeconds(dtMax.getSeconds() + 1)).toISOString();
-    listEvents(calendarId, encodeURIComponent(datetime.toISOString()), encodeURIComponent(dtMax),
-            function (events) {
-                if (events.length < 1) {
-                    return callback("Jag kan tyvärr inte hitta någon information om det.");
-                }
-                var location = events[0].location;
-                var summary = events[0].summary;
-                var startdate = events[0].start.dateTime;
-                var enddate = events[0].end.dateTime;
-                if (request_type === "Doing") {
-                    return callback(fname + " har enligt sin kalender " + summary + " " + formatDate(startdate, enddate));
-                } else {
-                    return callback(fname + " är i " + location + " " + formatDate(startdate, enddate));
-                }
+function findEvent(calendarId, datetime, fname, request_type) {
 
-            }
-    );
-}
-
-function findEvents(calendarId, startdate, enddate, fname, request_type, callback) {
-
-    listEvents(calendarId, encodeURIComponent(startdate.toISOString()), encodeURIComponent(enddate.toISOString()),
-            function (events) {
-                var sb = "Enligt " + fname + " kalender " + (request_type === 'Doing' ? ' har ' : ' är ') + " hen ";
-                if (events.length < 1) {
-                    if (request_type === "Doing") {
-                        return callback(fname + ' har inget planerat.');
-                    } else {
-                        return callback('Jag kan tyvärr inte hitta den informationen i kalendern.');
-                    }
-                } else {
-                    events.forEach(function (event) {
-
-                        var location = event.location;
-                        var summary = event.summary;
-                        var startdate = event.start.dateTime;
-                        var enddate = event.end.dateTime;
-                        if (request_type === "Doing") {
-                            sb += summary + " " + formatDate(startdate, enddate) + ", ";
+    return  new Promise((resolve, reject) => {
+        try {
+            datetime = new Date(datetime);
+        } catch (error) {
+            console.log("Error on findEvent function: ", error);
+            reject(ERROR_MSG);
+            return;
+        }
+        var dtMax = datetime;
+        dtMax = new Date(dtMax.setSeconds(dtMax.getSeconds() + 1)).toISOString();
+        listEvents(calendarId, encodeURIComponent(datetime.toISOString()), encodeURIComponent(dtMax))
+                .then((events) => {
+                    if (events.length < 1) {
+                        if (request_type === "Search") {
+                            resolve("Jag kan tyvärr inte hitta " + fname);
                         } else {
-                            sb += " i " + location  + formatDate(startdate, enddate) + ", ";
-
+                            resolve("Jag kan tyvärr inte hitta någon information om det.");
                         }
-
-                    });
-                    callback(sb);
-                }
-            }
-    );
+                        return;
+                    }
+                    var location = events[0].location;
+                    var summary = events[0].summary;
+                    var startdate = events[0].start.dateTime;
+                    var enddate = events[0].end.dateTime;
+                    if (request_type === "Doing") {
+                        resolve(fname + " har enligt sin kalender " + summary + " " + formatDate(startdate, enddate));
+                    } else if (request_type === "Search") {
+                        resolve(fname + " har just nu " + summary + " i " + location + " " + formatDate(startdate, enddate));
+                    } else {
+                        resolve(fname + " är i " + location + " " + formatDate(startdate, enddate));
+                    }
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+    });
 }
 
-function listEvents(calendarId, dateFrom, dateTo, callback) {
-    var apiKey = 'AIzaSyDXSrMo_Y0lV94nFcntnMbsID5wjleFLdg';
+function findEvents(calendarId, startdate, enddate, fname, request_type) {
 
-    https.get('https://www.googleapis.com/calendar/v3/calendars/' +
-            calendarId +
-            '/events?key=' +
-            apiKey +
-            '&timeMin=' + dateFrom +
-            '&timeMax=' + dateTo, (resp) => {
-        var data = '';
-        // A chunk of data has been recieved.
-        resp.on('data', (chunk) => {
-            data += chunk;
-        });
-        resp.on('end', function () {
-            try {
-                var events = JSON.parse(data);
-                return callback(events.items);
-            } catch (e) {
-                console.log(e);
-            }
+    return new Promise((resolve, reject) => {
+        try {
+            startdate = new Date(startdate);
+            enddate = new Date(enddate);
+        } catch (error) {
+            console.log("Error on findEvents function: ", error);
+            reject(ERROR_MSG);
+            return;
+        }
+        listEvents(calendarId, encodeURIComponent(startdate.toISOString()), encodeURIComponent(enddate.toISOString()))
+                .then((events) => {
+                    var sb = "Enligt " + fname + " kalender " + (request_type === 'Doing' ? ' har ' : ' är ') + " hen ";
+                    if (events.length < 1) {
+                        if (request_type === "Doing") {
+                            resolve(fname + ' har inget planerat.');
+                        } else {
+                            resolve('Jag kan tyvärr inte hitta den informationen i kalendern.');
+                        }
+                    } else {
+                        events.forEach(function (event) {
+                            var location = event.location;
+                            var summary = event.summary;
+                            var startdate = event.start.dateTime;
+                            var enddate = event.end.dateTime;
 
-        });
-    }).on('error', function (e) {
-        console.log("Got an error: ", e);
+                            if (request_type === "Doing") {
+                                sb += summary + " " + formatDate(startdate, enddate) + ", ";
+                            } else {
+                                sb += " i " + location + " " + formatDate(startdate, enddate) + ", ";
+                            }
+
+                        });
+                        resolve(sb);
+                    }
+                })
+                .catch((error) => {
+                    reject(error);
+                });
     });
+
+}
+
+function listEvents(calendarId, dateFrom, dateTo) {
+    var apiKey = 'AIzaSyDXSrMo_Y0lV94nFcntnMbsID5wjleFLdg';
+    return new Promise((resolve, reject) => {
+        https.get('https://www.googleapis.com/calendar/v3/calendars/' +
+                calendarId +
+                '/events?key=' +
+                apiKey +
+                '&timeMin=' + dateFrom +
+                '&timeMax=' + dateTo, (resp) => {
+            var data = '';
+            // A chunk of data has been recieved.
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+            resp.on('end', function () {
+                try {
+                    var events = JSON.parse(data);
+                    return resolve(events.items);
+                } catch (e) {
+                    console.log("Error parsing json: ", e);
+                    reject(ERROR_MSG);
+                }
+
+            });
+        }).on('error', function (e) {
+            console.log("Error getting data from API: ", e);
+            reject(ERROR_MSG);
+        });
+    });
+
 
 }
 
