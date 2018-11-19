@@ -1,3 +1,6 @@
+const moment = require('moment-timezone');
+moment.locale('se');
+
 
 
 function formatDate(startTimeP, endTimeP) {
@@ -22,10 +25,10 @@ function formatDate(startTimeP, endTimeP) {
         var isYear = startTime.getFullYear() === todaysDate.getFullYear();
         var isMonth = startTime.getMonth() === todaysDate.getMonth();
         var isDay = startTime.getDate() === todaysDate.getDate();
-
-        var options = {hour: 'numeric', minute: 'numeric'};
-        var startT = startTime.toLocaleString('sv-SE', options);
-        var endT = endTime.toLocaleString('sv-SE', options);
+        
+        var timezone = "Europe/Stockholm";
+        var startT = moment(startTime).tz(timezone).format('LT');
+        var endT = moment(endTime).tz(timezone).format('LT');;
 
         if (isYear && isMonth && isDay) {
             return "mellan " + startT + " och " + endT;

@@ -1,4 +1,4 @@
-const cts = require('./constants');
+const cts = require('../misc/constants');
 const ERROR_MSG = cts.error_msg;
 const listEvents = require("./https_request").listEvents;
 const formatDate = require("./date_formater").format_date;
@@ -13,8 +13,9 @@ function findEvent(calendarId, datetime, fname, request_type) {
             reject(ERROR_MSG);
             return;
         }
-        var dtMax = datetime;
+        var dtMax = new Date(datetime);
         dtMax = new Date(dtMax.setSeconds(dtMax.getSeconds() + 1)).toISOString();
+
         listEvents(calendarId, encodeURIComponent(datetime.toISOString()), encodeURIComponent(dtMax))
                 .then((events) => {
                     if (events.length < 1) {

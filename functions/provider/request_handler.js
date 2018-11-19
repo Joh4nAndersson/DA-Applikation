@@ -3,10 +3,20 @@ const events = require("./events");
 const findEvent = events.findEvent;
 const findEvents = events.findEvents;
 
-const cts = require('./constants');
+const cts = require('../misc/constants');
 const ERROR_MSG = cts.error_msg;
 const DEFAULT_RESPONSE = cts.default_response;
 const empty = cts.is_empty;
+
+const serviceAccount = require("../misc/serviceAccountKey.json");
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://newagent-44155.firebaseio.com"
+});
+
+var db = admin.database();
+var key = 'calendars/';
 
 function simple_request(conv) {
     var params = conv.parameters;
@@ -15,8 +25,7 @@ function simple_request(conv) {
     var lname = params['last-name'].hasOwnProperty('last-name') ? (params['last-name'])['last-name'] : params['last-name'];
     var reqType = params['request-entity'];
 
-    var db = admin.database();
-    var key = 'calendars/';
+
     return new Promise(function (resolve, reject) {
         db.ref(key).orderByChild('name')
                 .equalTo(fname.toLowerCase() + " " + lname.toLowerCase())
@@ -28,7 +37,6 @@ function simple_request(conv) {
                         return;
                     }
                     var calendarID = value[0].calendarID;
-
                     findEvent(calendarID, new Date(), fname, reqType)
                             .then((resp) => {
                                 resolve(resp);

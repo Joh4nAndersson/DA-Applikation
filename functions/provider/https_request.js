@@ -1,5 +1,5 @@
 const https = require('https');
-const cts = require('./constants');
+const cts = require('../misc/constants');
 const ERROR_MSG = cts.error_msg;
 
 
@@ -33,5 +33,6 @@ function listEvents(calendarId, dateFrom, dateTo) {
         });
     });
 }
+
 
 module.exports.listEvents = listEvents; 
