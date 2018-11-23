@@ -37,7 +37,7 @@ function simple_request(conv) {
                         return;
                     }
                     var calendarID = value[0].calendarID;
-                    findEvent(calendarID, new Date(), fname, reqType)
+                    findEvents(calendarID, new Date(), null, fname, reqType)
                             .then((resp) => {
                                 resolve(resp);
                             })
@@ -56,9 +56,6 @@ function advanced_request(conv) {
     var date = params['date'];
     var datePeriod = params['date-period'];
 
-    var db = admin.database();
-    var key = 'calendars/';
-
     return new Promise(function (resolve, reject) {
         db.ref(key).orderByChild('name')
                 .equalTo(fname.toLowerCase() + " " + lname.toLowerCase())
@@ -71,7 +68,7 @@ function advanced_request(conv) {
                     var calendarID = value[0].calendarID;
 
                     if (empty(datetime) && empty(date) && empty(datePeriod)) {
-                        findEvent(calendarID, new Date(), fname, reqType)
+                        findEvents(calendarID, new Date(), null, fname, reqType)
                                 .then((resp) => {
                                     resolve(resp);
                                 })
@@ -91,7 +88,7 @@ function advanced_request(conv) {
                                         reject(error);
                                     });
                         } else {
-                            findEvent(calendarID, datetime, fname, reqType)
+                            findEvents(calendarID, datetime, new Date(), fname, reqType)
                                     .then((resp) => {
                                         resolve(resp);
                                     })
@@ -99,7 +96,8 @@ function advanced_request(conv) {
                                         reject(error);
                                     });
                         }
-                    } else if (!empty(date)) {
+                    } 
+                    else if (!empty(date)) {
                         datetime = new Date(date);
                         var startdate = datetime.setHours(0, 0, 0, 0);
                         var enddate = datetime.setHours(23, 59, 59, 999);

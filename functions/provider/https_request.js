@@ -1,10 +1,9 @@
 const https = require('https');
 const cts = require('../misc/constants');
 const ERROR_MSG = cts.error_msg;
-
+const apiKey = cts.api_key;
 
 function listEvents(calendarId, dateFrom, dateTo) {
-    var apiKey = 'AIzaSyDXSrMo_Y0lV94nFcntnMbsID5wjleFLdg';
     return new Promise((resolve, reject) => {
         https.get('https://www.googleapis.com/calendar/v3/calendars/' +
                 calendarId +
@@ -20,7 +19,8 @@ function listEvents(calendarId, dateFrom, dateTo) {
             resp.on('end', function () {
                 try {
                     var events = JSON.parse(data);
-                    return resolve(events.items);
+                    resolve(events.items);
+                    return;
                 } catch (e) {
                     console.log("Error parsing json: ", e);
                     reject(ERROR_MSG);

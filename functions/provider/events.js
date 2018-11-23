@@ -3,6 +3,7 @@ const ERROR_MSG = cts.error_msg;
 const listEvents = require("./https_request").listEvents;
 const formatDate = require("./date_formater").format_date;
 
+//Function not used
 function findEvent(calendarId, datetime, fname, request_type) {
 
     return  new Promise((resolve, reject) => {
@@ -45,11 +46,16 @@ function findEvent(calendarId, datetime, fname, request_type) {
 }
 
 function findEvents(calendarId, startdate, enddate, fname, request_type) {
-
     return new Promise((resolve, reject) => {
         try {
             startdate = new Date(startdate);
-            enddate = new Date(enddate);
+            if (enddate === null) {
+                dtMax = new Date(startdate);
+                enddate = new Date(dtMax.setSeconds(dtMax.getSeconds() + 1));
+            } else {
+                enddate = new Date(enddate);
+            }
+
         } catch (error) {
             console.log("Error on findEvents function: ", error);
             reject(ERROR_MSG);
@@ -57,26 +63,32 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
         }
         listEvents(calendarId, encodeURIComponent(startdate.toISOString()), encodeURIComponent(enddate.toISOString()))
                 .then((events) => {
-                    var sb = "Enligt " + fname + " kalender " + (request_type === 'Doing' ? ' har ' : ' är ') + " hen ";
                     if (events.length < 1) {
                         if (request_type === "Doing") {
                             resolve(fname + ' har inget planerat.');
+                        } else if (request_type === "Search") {
+                            resolve("Jag kan tyvärr inte hitta " + fname);
                         } else {
                             resolve('Jag kan tyvärr inte hitta den informationen i kalendern.');
                         }
                     } else {
-                        events.forEach(function (event) {
+                        var sb = fname + (request_type === 'Doing' ? ' har ' : ' är ') +"enligt sin kalender";
+
+                        events.forEach(function (event, index, array) {
                             var location = event.location;
                             var summary = event.summary;
-                            var startdate = event.start.dateTime;
-                            var enddate = event.end.dateTime;
-
-                            if (request_type === "Doing") {
-                                sb += summary + " " + formatDate(startdate, enddate) + ", ";
-                            } else {
-                                sb += " i " + location + " " + formatDate(startdate, enddate) + ", ";
+                            var startDateTime = event.start.dateTime;
+                            var endDateTime = event.end.dateTime;
+                            var colon = ", ";
+                            if (index === (array.length - 1)) {
+                                colon = ".";
                             }
-
+                            if (request_type === "Doing") {
+                                sb += " "+ summary;
+                            } else {
+                                sb += " i " + location;
+                            }
+                            sb += " " + formatDate(startDateTime, endDateTime) + colon;
                         });
                         resolve(sb);
                     }
