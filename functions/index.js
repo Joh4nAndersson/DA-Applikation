@@ -4,6 +4,7 @@ const {dialogflow} = require('actions-on-google');
 const request_handler = require('./provider/request_handler');
 const simple_request = request_handler.simple_request;
 const advanced_request = request_handler.advanced_request;
+const continue_text = " Vill du veta något mer?";
 
 const REQUEST_INTENT = 'Request-Intent';
 const PERSON_INTENT = 'Person-Intent';
@@ -14,7 +15,7 @@ const app = dialogflow();
 app.intent(PERSON_INTENT, (conv) => {
     return simple_request(conv).
             then((response) => {
-                conv.close(response);
+                conv.ask(response+ continue_text);
             })
             .catch((error) => {
                 conv.close(error);
@@ -24,7 +25,7 @@ app.intent(PERSON_INTENT, (conv) => {
 app.intent(REQUEST_INTENT, (conv) => {
     return advanced_request(conv).
             then((response) => {
-                conv.close(response);
+                conv.ask(response+ continue_text);
             })
             .catch((error) => {
                 conv.close(error);
@@ -34,7 +35,7 @@ app.intent(REQUEST_INTENT, (conv) => {
 app.intent(FF_INTENT, (conv) => {
     return simple_request(conv).
             then((response) => {
-                conv.close(response);
+                conv.ask(response+ continue_text);
             })
             .catch((error) => {
                 conv.close(error);
@@ -44,7 +45,7 @@ app.intent(FF_INTENT, (conv) => {
 app.intent(FW_INTENT, (conv) => {
     return simple_request(conv).
             then((response) => {
-                conv.close(response);
+                conv.ask(response+ continue_text);
             })
             .catch((error) => {
                 conv.close(error);

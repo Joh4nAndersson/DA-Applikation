@@ -6,7 +6,7 @@ const formatDate = require("./date_formater").format_date;
 //Function not used
 function findEvent(calendarId, datetime, fname, request_type) {
 
-    return  new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
             datetime = new Date(datetime);
         } catch (error) {
@@ -67,9 +67,9 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
                         if (request_type === "Doing") {
                             resolve(fname + ' har inget planerat.');
                         } else if (request_type === "Search") {
-                            resolve("Jag kan tyvärr inte hitta " + fname);
+                            resolve("Jag kan tyvärr inte hitta " + fname+".");
                         } else {
-                            resolve('Jag kan tyvärr inte hitta den informationen i kalendern.');
+                            resolve('Jag kan tyvärr inte hitta den informationen i '+fname+' kalender.');
                         }
                     } else {
                         var sb = fname + (request_type === 'Doing' ? ' har ' : ' är ') +"enligt sin kalender";
@@ -100,5 +100,5 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
 
 }
 
-module.exports.findEvent = findEvent;
+//module.exports.findEvent = findEvent;
 module.exports.findEvents = findEvents;
