@@ -1,9 +1,9 @@
 const cts = require('../misc/constants');
 const ERROR_MSG = cts.error_msg;
-const listEvents = require("./https_request").listEvents;
+const listEvents = require("../integration/https_request").listEvents;
 const formatDate = require("./date_formater").format_date;
 
-//Function not used
+//Debricated function
 function findEvent(calendarId, datetime, fname, request_type) {
 
     return new Promise((resolve, reject) => {
@@ -61,18 +61,20 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
             reject(ERROR_MSG);
             return;
         }
-        listEvents(calendarId, encodeURIComponent(startdate.toISOString()), encodeURIComponent(enddate.toISOString()))
+        listEvents(calendarId,
+                encodeURIComponent(startdate.toISOString()),
+                encodeURIComponent(enddate.toISOString()))
                 .then((events) => {
                     if (events.length < 1) {
                         if (request_type === "Doing") {
                             resolve(fname + ' har inget planerat.');
                         } else if (request_type === "Search") {
-                            resolve("Jag kan tyvärr inte hitta " + fname+".");
+                            resolve("Jag kan tyvärr inte hitta " + fname + ".");
                         } else {
-                            resolve('Jag kan tyvärr inte hitta den informationen i '+fname+' kalender.');
+                            resolve('Jag kan tyvärr inte hitta den informationen i ' + fname + ' kalender.');
                         }
                     } else {
-                        var sb = fname + (request_type === 'Doing' ? ' har ' : ' är ') +"enligt sin kalender";
+                        var sb = fname + (request_type === 'Doing' ? ' har ' : ' är ') + "enligt sin kalender";
 
                         events.forEach(function (event, index, array) {
                             var location = event.location;
@@ -84,7 +86,7 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
                                 colon = ".";
                             }
                             if (request_type === "Doing") {
-                                sb += " "+ summary;
+                                sb += " " + summary;
                             } else {
                                 sb += " i " + location;
                             }

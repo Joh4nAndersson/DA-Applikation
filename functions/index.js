@@ -54,4 +54,3 @@ app.intent(FW_INTENT, (conv) => {
 
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app);
 
-

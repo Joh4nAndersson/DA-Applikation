@@ -2,7 +2,7 @@
 const events = require("./events");
 const findEvent = events.findEvent;
 const findEvents = events.findEvents;
-const getCalenderID = require("../integration/dbhandler").getCalenderID;
+const getCalendarID = require("../integration/dbhandler").getCalendarID;
 
 const cts = require('../misc/constants');
 const ERROR_MSG = cts.error_msg;
@@ -22,10 +22,10 @@ function simple_request(conv) {
     var reqType = params['request-entity'];
 
     return new Promise(function (resolve, reject) {
-        return getCalenderID(fname, lname)
+        return getCalendarID(fname, lname)
                 .then((value) => {
                     if (value === null || value === 'null') {
-                        resolve("Jag kan tyvärr inte hitta någon information på personen.");
+                        resolve("Jag kan tyvärr inte hitta någon information om personen.");
                         return;
                     }
                     var calendarID = value[0].calendarID;
@@ -56,10 +56,10 @@ function advanced_request(conv) {
     var datePeriod = params['date-period'];
 
     return new Promise(function (resolve, reject) {
-        return getCalenderID(fname, lname)
+        return getCalendarID(fname, lname)
                 .then((value) => {
                     if (value === null || value === 'null') {
-                        resolve("Jag kan tyvärr inte hitta någon information på personen.");
+                        resolve("Jag kan tyvärr inte hitta någon information om personen.");
                         return;
                     }
                     var calendarID = value[0].calendarID;

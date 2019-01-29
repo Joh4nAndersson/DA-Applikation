@@ -8,7 +8,7 @@ admin.initializeApp({
     databaseURL: "https://newagent-44155.firebaseio.com"
 });
 
-function get_calID_by_name(fname, lname) {
+function getCalendarID(fname, lname) {
     var db = admin.database();
     var key = 'calendars/';
     var search = db.ref(key)
@@ -27,4 +27,4 @@ function get_calID_by_name(fname, lname) {
 
 }
 
-module.exports.getCalenderID = get_calID_by_name;
+module.exports.getCalendarID = getCalendarID;
