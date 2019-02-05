@@ -1,6 +1,6 @@
 # DA-Applikation
 En röststyrd kalenderapplikation utvecklad till Google Assistant som en del av examensarbete på KTH.
-Alla nödvändiga funktioner som tillhör serverkoden finns i mappen 'functions'
+Alla nödvändiga funktioner som tillhör serverkoden finns i mappen 'functions'.
 ## Versioner av Dialogflow och Node.js moduler som användes i applikationen
 * Dialogflow: V2
 * Firebase Node.js: V6
