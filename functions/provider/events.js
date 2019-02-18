@@ -45,7 +45,11 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
                         } else if (request_type === "Search") {
                             resolve("Jag kan tyvärr inte hitta " + fname + ".");
                         } else {
-                            resolve('Jag kan tyvärr inte hitta den informationen i ' + fname + ' kalender.');
+                            var extra = 's';
+                            if(fname.charAt(fname.length-1) =='s'){
+                                extra = '';
+                            }
+                            resolve('Jag kan tyvärr inte hitta den informationen i ' + fname+extra + ' kalender.');
                         }
                     } else {
                         var sb = fname + (request_type === 'Doing' ? ' har ' : ' är ') + "enligt sin kalender";
