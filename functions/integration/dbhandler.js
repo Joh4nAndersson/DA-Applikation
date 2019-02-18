@@ -25,7 +25,7 @@ function getCalendarID(fname, lname) {
     var search = db.ref(key)
             .orderByChild('name')
             .equalTo(fname.toLowerCase() + " " + lname.toLowerCase());
-
+    
     return new Promise((resolve, reject) => {
         search.once('value', (snapshot) => {
             resolve(snapshot.val());

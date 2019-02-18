@@ -47,7 +47,7 @@ function simple_request(conv) {
                         resolve("Jag kan tyvärr inte hitta någon information om personen.");
                         return;
                     }
-                    var calendarID = value[0].calendarID;
+                    var calendarID = value[Object.keys(value)[0]].calendarID;
                     //Kallar på findEvents() för att hitta kalenderhändelser
                     // med kalender ID:n och bygga upp ett textbaserat svar.
                     findEvents(calendarID, new Date(), null, fname, reqType)
@@ -97,7 +97,7 @@ function advanced_request(conv) {
                         return;
                     }
                     
-                    var calendarID = value[0].calendarID;
+                    var calendarID = value[Object.keys(value)[0]].calendarID;
                     //Startdate och enddate skapas och tilldelas till olika tidpunkt objekt beroende på vilka kalenderhändelser
                     //användaren vill hitta som finns mellan en tidsperiod (startdate och enddate).
                     var startdate;
