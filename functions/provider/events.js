@@ -36,7 +36,7 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
         //Funktionen listEvents används för att hämta alla kalenderhändelser som inträffar mellan tidsperioden (mellan startdate och enddate)
         //Funktionen encodeURIComponent() konverterar för en URI genom att ersätta URL-reserverade tecken med deras UTF-8-kodning.
         listEvents(calendarId,
-                encodeURIComponent(startdate.toISOString()), 
+                encodeURIComponent(startdate.toISOString()),
                 encodeURIComponent(enddate.toISOString()))
                 .then((events) => {
                     if (events.length < 1) {
@@ -45,18 +45,16 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
                         } else if (request_type === "Search") {
                             resolve("Jag kan tyvärr inte hitta " + fname + ".");
                         } else {
-                            var extra = 's';
-                            if(fname.charAt(fname.length-1) =='s'){
-                                extra = '';
-                            }
-                            resolve('Jag kan tyvärr inte hitta den informationen i ' + fname+extra + ' kalender.');
+                            resolve('Jag kan tyvärr inte hitta den informationen i ' + parse_name(fname) + ' kalender.');
                         }
                     } else {
                         var sb = fname + (request_type === 'Doing' ? ' har ' : ' är ') + "enligt sin kalender";
-                        
+                        var count_events = 0;
+
                         //Itererar igenom JSON objektet som innhåller alla kalenderhändelser och extraherar alla parametrar från varje händelse.
                         //För varje iteration byggt den textbaserade svaret med hjälp av parametrarna.
                         events.forEach(function (event, index, array) {
+
                             var location = event.location;
                             var summary = event.summary;
                             var startDateTime = event.start.dateTime;
@@ -66,14 +64,25 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
                                 colon = ".";
                             }
                             if (request_type === "Doing") {
+                                if (!event.hasOwnProperty('summary')) {
+                                    return;
+                                }
                                 sb += " " + summary;
                             } else {
+                                if (!event.hasOwnProperty('location')) {
+                                    return;
+                                }
                                 sb += " i " + location;
                             }
                             sb += " " + formatDate(startDateTime, endDateTime) + colon;
+                            count_events += 1;
                         });
-                        //Svaret returneras
-                        resolve(sb);
+                        if (count_events > 0) {
+                            //Svaret returneras
+                            resolve(sb);
+                        } else {
+                            resolve('Jag kan tyvärr inte hitta den informationen i ' + parse_name(fname) + ' kalender.');
+                        }
                     }
                 })
                 .catch((error) => {
@@ -82,6 +91,19 @@ function findEvents(calendarId, startdate, enddate, fname, request_type) {
                 });
     });
 
+}
+
+/**
+ * Funktionen lägg ett 's' i slutet av parametern.
+ * @param {String} name 
+ * @returns {String} - Returnerar namn med ett 's' i slutet
+ */
+function parse_name(name) {
+    extra = 's';
+    if (name.charAt(name.length - 1) === extra) {
+        extra = '';
+    }
+    return name+extra;
 }
 
 module.exports.findEvents = findEvents;
